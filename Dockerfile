@@ -1,20 +1,25 @@
-# Imagen base de runtime
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-WORKDIR /app
-EXPOSE 8080
-
-# Imagen de build
+# ===============================
+# BUILD STAGE
+# ===============================
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-COPY ["LynxPay.csproj", "./"]
-RUN dotnet restore "LynxPay.csproj"
+# Copiamos solo el csproj y restauramos dependencias
+COPY LynxPay/LynxPay.csproj LynxPay/
+RUN dotnet restore LynxPay/LynxPay.csproj
 
-COPY . .
-RUN dotnet publish "LynxPay.csproj" -c Release -o /app/publish
+# Copiamos el resto del código
+COPY LynxPay/ LynxPay/
+WORKDIR /src/LynxPay
 
-# Imagen final
-FROM base AS final
+RUN dotnet publish LynxPay.csproj -c Release -o /app/publish
+
+# ===============================
+# RUNTIME STAGE
+# ===============================
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
+EXPOSE 8080
+
 COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "LynxPay.dll"]

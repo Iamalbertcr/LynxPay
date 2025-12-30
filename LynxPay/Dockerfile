@@ -4,12 +4,14 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copiamos el csproj y restauramos dependencias
-COPY LynxPay.csproj .
-RUN dotnet restore LynxPay.csproj
+# Copiamos solo el csproj y restauramos dependencias
+COPY LynxPay/LynxPay.csproj LynxPay/
+RUN dotnet restore LynxPay/LynxPay.csproj
 
-# Copiamos todo el código
-COPY . .
+# Copiamos el resto del código
+COPY LynxPay/ LynxPay/
+WORKDIR /src/LynxPay
+
 RUN dotnet publish LynxPay.csproj -c Release -o /app/publish
 
 # ===============================
