@@ -67,5 +67,10 @@ namespace LynxPay.Services
                 throw;
             }
         }
+
+        internal NpgsqlConnection? GetConnection(ClaimsPrincipal user)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
