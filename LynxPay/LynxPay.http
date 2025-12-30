@@ -1,0 +1,6 @@
+@LynxPay_HostAddress = http://localhost:5037
+
+GET {{LynxPay_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
