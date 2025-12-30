@@ -21,7 +21,8 @@ namespace LynxPay.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginRequest request)
         {
-            var connStr = _config.GetConnectionString("CentralDb");
+            var connStr = _config.GetConnectionString("CentralDb")
+                ?? throw new InvalidOperationException("CentralDb connection not configured");
 
             await using var conn = new NpgsqlConnection(connStr);
             await conn.OpenAsync();
@@ -34,7 +35,7 @@ namespace LynxPay.Controllers
 
             cmd.Parameters.AddWithValue("e", request.Email);
 
-            var reader = await cmd.ExecuteReaderAsync();
+            await using var reader = await cmd.ExecuteReaderAsync();
 
             if (!await reader.ReadAsync())
                 return Unauthorized();
@@ -50,12 +51,21 @@ namespace LynxPay.Controllers
                 new Claim(ClaimTypes.Email, request.Email)
             };
 
+            var jwtKey = _config["Jwt:Key"]
+                ?? throw new InvalidOperationException("JWT Key not configured");
+
+            var jwtIssuer = _config["Jwt:Issuer"]
+                ?? throw new InvalidOperationException("JWT Issuer not configured");
+
+            var jwtAudience = _config["Jwt:Audience"]
+                ?? throw new InvalidOperationException("JWT Audience not configured");
+
             var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+                Encoding.UTF8.GetBytes(jwtKey));
 
             var token = new JwtSecurityToken(
-                issuer: _config["Jwt:Issuer"],
-                audience: _config["Jwt:Audience"],
+                issuer: jwtIssuer,
+                audience: jwtAudience,
                 claims: claims,
                 expires: DateTime.UtcNow.AddMinutes(60),
                 signingCredentials:

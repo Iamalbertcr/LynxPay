@@ -20,13 +20,16 @@ namespace LynxPay.Controllers
         [HttpGet]
         public async Task<IActionResult> Get()
         {
+            if (User?.Identity == null || !User.Identity.IsAuthenticated)
+                return Unauthorized();
+
             await using var conn = _conn.GetConnection(User);
             await conn.OpenAsync();
 
             var cmd = new NpgsqlCommand(
                 "SELECT * FROM ventas", conn);
 
-            var reader = await cmd.ExecuteReaderAsync();
+            await using var reader = await cmd.ExecuteReaderAsync();
             var list = new List<object>();
 
             while (await reader.ReadAsync())
